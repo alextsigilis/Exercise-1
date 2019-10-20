@@ -2,8 +2,6 @@
 #include <math.h>
 #include "vptree.h"
 
-#include <stdio.h>
-
 #define GET(d, i, k)  i*d + k - 1
 
 double findMedian (double * A, int n) {

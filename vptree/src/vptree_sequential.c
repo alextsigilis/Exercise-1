@@ -1,11 +1,8 @@
-
-#include <math.h>
 #include <stdlib.h>
-#include <time.h>
+#include <math.h>
+#include "vptree.h"
+
 #include <stdio.h>
-
-#include "../inc/vptree.h"
-
 
 #define GET(d, i, k)  i*d + k - 1
 
@@ -58,7 +55,7 @@ double findMedian (double * A, int n) {
 
 vptree * buildvp (double * X, int n, int d) {
 
-	vptree *T;
+	vptree *T = malloc(sizeof(vptree));
 
 	//
 	//    ALGORITHM
@@ -79,7 +76,7 @@ vptree * buildvp (double * X, int n, int d) {
 			distance[i] = 0;
 			for (int k = 0; k < d; k++) {
 				int idx = GET(d, i, k),
-						pvt_idx = GET(d,n-1,k);
+						pvt_idx = GET(d,pivot,k);
 				distance[i] += pow(X[idx] - X[pvt_idx], 2);
 			}
 			distance[i] = sqrt( distance[i] );
@@ -91,7 +88,7 @@ vptree * buildvp (double * X, int n, int d) {
 	// STEP 4:
 	T->vp = malloc(d*sizeof(double));
 	for (int k = 0; k < d; k++) {
-		int idx = GET(d, n-1,k);
+		int idx = GET(d, pivot,k);
 		T->vp[k] = X[idx];
 	}
 

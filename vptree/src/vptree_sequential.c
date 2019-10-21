@@ -2,12 +2,9 @@
 #include <math.h>
 #include "vptree.h"
 
-#define GET(d, i, k)  i*d + k - 1
+#define IDX(d, i, k)  i*d + k
 
-double findMedian (double * A, int n) {
-
-	int k = n/2;
-
+double quickSelect (double * A, int n, int k) {
 	int start = 0;
 	int end = n;
 
@@ -51,6 +48,20 @@ double findMedian (double * A, int n) {
 	return A[start];
 }
 
+double findMedian (double * A, int n) {
+
+	int k1 = floor((double)(n) / 2),
+			k2 = ceil((double)(n) / 2);
+
+	double m1 = quickSelect(A, n, k1),
+				 m2 = quickSelect(A, n, k2);
+
+
+	return (m1+m2)/2;
+
+
+}
+
 vptree * buildvp (double * X, int n, int d) {
 
 	vptree *T = malloc(sizeof(vptree));
@@ -73,8 +84,8 @@ vptree * buildvp (double * X, int n, int d) {
 	for (int i = 0; i < n; i++) {
 			distance[i] = 0;
 			for (int k = 0; k < d; k++) {
-				int idx = GET(d, i, k),
-						pvt_idx = GET(d,pivot,k);
+				int idx = IDX(d, i, k),
+						pvt_idx = IDX(d,pivot,k);
 				distance[i] += pow(X[idx] - X[pvt_idx], 2);
 			}
 			distance[i] = sqrt( distance[i] );
@@ -86,7 +97,7 @@ vptree * buildvp (double * X, int n, int d) {
 	// STEP 4:
 	T->vp = malloc(d*sizeof(double));
 	for (int k = 0; k < d; k++) {
-		int idx = GET(d, pivot,k);
+		int idx = IDX(d, pivot,k);
 		T->vp[k] = X[idx];
 	}
 

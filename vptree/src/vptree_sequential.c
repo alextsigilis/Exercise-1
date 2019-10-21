@@ -1,10 +1,65 @@
 #include <stdlib.h>
 #include <math.h>
+#include <stdio.h>
 #include "vptree.h"
 
 #define IDX(d, i, k)  i*d + k
 
-double quickSelect (double * A, int n, int k) {
+typedef struct {
+	double *point;
+	int idx;
+	int d;
+	double distance;
+} tuple;
+
+//! Calculates the distances
+//! from every point in a specific point,
+//! in d-dimensional space
+/*!
+	\param A				Input tuple points
+	\param n				Number of data points (rows of X)
+	\param d				Number of dimensions (collumns of  X)
+	\param point		Τhe point at which distances are taken
+
+	\Return 				void
+*/
+void distances (tuple *A, int n, int d, double *point){
+
+	double* dist = malloc( n * sizeof(double) );
+
+	// Για κάθε σημείο
+	for(int i = 0; i < n; i++) {
+
+		dist[i] = 0;
+
+		// Πρόσθεσε τα τετράγωνα των διαφορών
+		for(int k = 0; k < d; k++) {
+			dist[i] += pow(
+											A[i].point[k] - point[k],
+											2
+										);
+		}
+
+		// Πάρε την τετραγωνική ρίζα
+		dist[i] = sqrt(dist[i]);
+	}
+
+	for(int i = 0; i < n; i++) {
+		A[i].distance = dist[i];
+	}
+}
+
+//! Returns the kth smallest element in
+//! an unordered.
+/*!
+	\param A		Input un-unordered array of tuples
+	\param n		Number of elements in A
+	\param k		Defines the kth element
+
+	\return The kth smallest elements
+					(also changes the array)
+*/
+double quickSelect (tuple * A, int n, int k) {
 	int start = 0;
 	int end = n;
 
@@ -13,20 +68,20 @@ double quickSelect (double * A, int n, int k) {
 		//
 		// PARTITION
 		//
-		double pivot = A[end-1];
+		tuple pivot = A[end-1];
 
 		int i = start-1;
 
 		for (int j = start; j < end-1; j++) {
-			if (A[j] <= pivot) {
+			if (A[j].distance <= pivot.distance) {
 				i++;
-				double tmp = A[j];
+				tuple tmp = A[j];
 				A[j] = A[i];
 				A[i] = tmp;
 			}
 		}
 
-		double tmp = A[i+1];
+		tuple tmp = A[i+1];
 		A[i+1] = A[end-1];
 		A[end-1] = tmp;
 		i++;
@@ -35,7 +90,7 @@ double quickSelect (double * A, int n, int k) {
 		// SELECT
 		//
 		if (i == k) {
-			return A[i];
+			return A[i].distance;
 		}
 		else if (i < k){
 			start = i+1;
@@ -45,103 +100,70 @@ double quickSelect (double * A, int n, int k) {
 		}
 	}
 
-	return A[start];
+	return A[start].distance;
 }
 
-double findMedian (double * A, int n) {
+vptree * vpt (tuple *A, int start, int end, int d) {
 
-	int k1 = floor((double)(n) / 2),
-			k2 = ceil((double)(n) / 2);
+	int n = end-start;
 
-	double m1 = quickSelect(A, n, k1),
-				 m2 = quickSelect(A, n, k2);
+	if (n <= 0) {
+		return NULL;
+	}
 
-
-	return (m1+m2)/2;
-
-
-}
-
-vptree * buildvp (double * X, int n, int d) {
-
+	// Allcate the memory for the vptree
 	vptree *T = malloc(sizeof(vptree));
 
-	//
-	//    ALGORITHM
-	// ================
-	// 1. Choose a Vantage Point (VP)
-	// 2. Compute the distance from the VP to every other point
-	// 3. Find the median Distance
-	// 4. Create the current node
-	// 5. Recursivly compute left and right child
-	// ---------------------------------------------------------
 
-	// STEP 1:
-	int pivot = n-1; // Uses the last element as pivot
+	// Store the index of the vp in the original array
+	T->idx = A[end-1].idx;
 
-	// STEP 2:
-	double distance[n];
-	for (int i = 0; i < n; i++) {
-			distance[i] = 0;
-			for (int k = 0; k < d; k++) {
-				int idx = IDX(d, i, k),
-						pvt_idx = IDX(d,pivot,k);
-				distance[i] += pow(X[idx] - X[pvt_idx], 2);
-			}
-			distance[i] = sqrt( distance[i] );
-	}
-
-	// STEP 3:
-	double medianDistance = findMedian(distance, n);
-
-	// STEP 4:
+	// Allocate and store the coordinates of the vp
 	T->vp = malloc(d*sizeof(double));
-	for (int k = 0; k < d; k++) {
-		int idx = IDX(d, pivot,k);
-		T->vp[k] = X[idx];
-	}
+	for(int k = 0; k < d; k++) T->vp[k] = A[end-1].point[k];
 
+
+	// Calculate the distances from the vantage point
+	distances(A, n-1, d, T->vp);
+
+	// Find the median distance
+	double medianDistance = quickSelect(A, n-1, (n-1)/2);
 	T->md = medianDistance;
 
-	T->idx = n-1;
-
-	// STEP 5:
-	if (n > 1) {
-		int n1 = floor( (double)(n/2) ),
-				n2 = ceil( (double)(n/2) );
-		double *X_inner = X + 0*d,
-					 *X_outer = X + n1*d;
-		T->inner = buildvp(X_inner, n1, d);
-		T->outer = buildvp(X_outer, n2, d);
-
-		T->outer->idx += n1;
-	}
-
-	else {
-		T->outer = NULL;
-		T->inner = NULL;
-	}
+	// Split into sub problems
+	T->inner = vpt(A, start, start+n/2, d);
+	T->outer = vpt(A, start+n/2+1, end, d);
 
 	return T;
 
 }
 
-vptree * getInner (vptree * T) {
-	return T->inner;
+
+vptree * buildvp (double *X, int n, int d) {
+
+	vptree *T = malloc(sizeof(vptree));
+	tuple A[n];
+
+	for(int i = 0; i < n; i++){
+
+		A[i].d = d;
+		A[i].point = malloc(d*sizeof(double));
+		A[i].distance = 0;
+
+		for(int k = 0; k < d; k++) {
+			A[i].point[k] = X[ IDX(d,i,k)  ];
+		}
+		A[i].idx = i;
+	}
+
+	T = vpt(A, 0, n, d);
+
+	return T;
+
 }
 
-vptree * getOuter (vptree * T) {
-	return T->outer;
-}
-
-double  getMD (vptree * T) {
-	return T->md;
-}
-
-double * getVP (vptree * T) {
-	return T->vp;
-}
-
-int getIDX (vptree * T) {
-	return T->idx;
-}
+vptree * getInner (vptree * T) {return T->inner;}
+vptree * getOuter (vptree * T) {return T->outer;}
+double  getMD (vptree * T) {return T->md;}
+double * getVP (vptree * T) {return T->vp;}
+int getIDX (vptree * T) {return T->idx;}

@@ -40,6 +40,7 @@ int empty (Queue* q) {
   return (f == b) && ((f > 0) && (b > 0));
 }
 
+
 int main () {
 
   FILE *in = fopen("data.in", "r");
@@ -55,30 +56,12 @@ int main () {
       double y;
       fscanf(in, "%lf", &y);
       X[IDX(d,i,k)] = y;
-      printf("%f ", y);
-    }
-    printf("\n");
-  }
-  printf("\n");
-
-  vptree *T = buildvp(X, n, d);
-
-  Queue* q = init_queue(n+1);
-
-  enqueue(q, T);
-
-  while( ! empty(q) ) {
-    vptree* curr = dequeue(q);
-    printf("%f\n", curr->md);
-
-    if (curr->inner != NULL) {
-      enqueue(q, curr->inner);
-    }
-    if (curr->outer != NULL) {
-      enqueue(q, curr->outer);
     }
   }
 
+  vptree *T = buildvp(X,n,d);
+
+  printf("%f\n", T->md);
 
   return 0;
 

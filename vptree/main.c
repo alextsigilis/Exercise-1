@@ -1,33 +1,85 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-
 #include "vptree.h"
+
+#define IDX(d, i, k)  i*d + k
+
+typedef struct {
+  vptree ** stream;
+  int front, back;
+} Queue;
+Queue* init_queue (int n) {
+  Queue *q = malloc( sizeof(Queue) );
+
+  q->stream = malloc( n * sizeof(vptree*) );
+
+  q->front = 0;
+  q->back = 0;
+
+  return q;
+
+}
+void free_queue (Queue* q) {
+  free(q);
+}
+void enqueue (Queue* q, vptree* node) {
+
+  q->stream[q->back] = node;
+  q->back += 1;
+
+}
+vptree* dequeue (Queue* q) {
+  int i = q->front;
+  q->front += 1;
+  return q->stream[i];
+}
+int empty (Queue* q) {
+  int f = q->front, b = q->back;
+
+  return (f == b) && ((f > 0) && (b > 0));
+}
 
 int main () {
 
-  srand(time(NULL));
+  FILE *in = fopen("data.in", "r");
 
-  int N = 10;
-  int d = 2;
+  int n , d;
 
-  double* A = malloc(N * d * sizeof(double));
+  fscanf(in, "%d %d", &n, &d);
 
-  for (int i = 0; i < N*d; i++) {
-    A[i] = ( (double) (rand() % 100) ) / ((double) (rand() % 10 +1));
-  }
-  for (int i = 0; i < N; i++) {
-    printf("(");
-    for (int k = 0; k < d-1; k++) {
-      printf("%.1f, ", A[i*d+k-1]);
+  double X[n*d];
+
+  for (int i = 0; i < n; i++) {
+    for (int k = 0; k < d; k++) {
+      double y;
+      fscanf(in, "%lf", &y);
+      X[IDX(d,i,k)] = y;
+      printf("%f ", y);
     }
-    printf("%.1f)\n", A[i*d+d-1-1]);
+    printf("\n");
   }
   printf("\n");
 
-  vptree* T = buildvp(A, N, d);
+  vptree *T = buildvp(X, n, d);
 
-  T = NULL;
+  Queue* q = init_queue(n+1);
+
+  enqueue(q, T);
+
+  while( ! empty(q) ) {
+    vptree* curr = dequeue(q);
+    printf("%f\n", curr->md);
+
+    if (curr->inner != NULL) {
+      enqueue(q, curr->inner);
+    }
+    if (curr->outer != NULL) {
+      enqueue(q, curr->outer);
+    }
+  }
+
 
   return 0;
+
 }

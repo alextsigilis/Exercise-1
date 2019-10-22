@@ -107,7 +107,7 @@ vptree * vpt (double *X, int* idx, int n, int d) {
 
 
 	double *dist_m = malloc(n*sizeof(double));
-	for(int i = 0; i < n; i++) { dist_m[i] = dist[i]; }
+	for(int i = 0; i < n-1; i++) { dist_m[i] = dist[i]; }
 
 	double median = findMedian(dist_m, n-1);
 	T->md = median;

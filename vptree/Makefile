@@ -21,7 +21,7 @@ SHELL := /bin/bash
 CC = gcc
 
 # define compile-time flags
-CFLAGS = -O3 -Wall -g
+CFLAGS =-Wall -g
 
 # define any directories containing header files
 INCLUDES = inc

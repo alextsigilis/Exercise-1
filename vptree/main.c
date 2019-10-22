@@ -5,39 +5,17 @@
 
 #define IDX(d, i, k)  i*d + k
 
-typedef struct {
-  vptree ** stream;
-  int front, back;
-} Queue;
-Queue* init_queue (int n) {
-  Queue *q = malloc( sizeof(Queue) );
+void fun (vptree* T) {
 
-  q->stream = malloc( n * sizeof(vptree*) );
+  if(T == NULL) {
+    return ;
+  }
 
-  q->front = 0;
-  q->back = 0;
+  printf("idx: %d, md: %f\n", T->idx, T->md);
 
-  return q;
+  fun(T->inner);
+  fun(T->outer);
 
-}
-void free_queue (Queue* q) {
-  free(q);
-}
-void enqueue (Queue* q, vptree* node) {
-
-  q->stream[q->back] = node;
-  q->back += 1;
-
-}
-vptree* dequeue (Queue* q) {
-  int i = q->front;
-  q->front += 1;
-  return q->stream[i];
-}
-int empty (Queue* q) {
-  int f = q->front, b = q->back;
-
-  return (f == b) && ((f > 0) && (b > 0));
 }
 
 int main () {
@@ -61,24 +39,9 @@ int main () {
   }
   printf("\n");
 
-  vptree *T = buildvp(X, n, d);
+  vptree* T = buildvp(X,n,d);
 
-  Queue* q = init_queue(n+1);
-
-  enqueue(q, T);
-
-  while( ! empty(q) ) {
-    vptree* curr = dequeue(q);
-    printf("%f\n", curr->md);
-
-    if (curr->inner != NULL) {
-      enqueue(q, curr->inner);
-    }
-    if (curr->outer != NULL) {
-      enqueue(q, curr->outer);
-    }
-  }
-
+  fun(T);
 
   return 0;
 

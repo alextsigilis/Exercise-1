@@ -143,12 +143,17 @@ vptree * vpt (double *X, int* idx, int n, int d) {
 			}
 			j2++;
 		}
-
 	}
 
 	// Recurse
 	T->inner = vpt(inner_points, inner_idx, n1, d);
 	T->outer = vpt(outer_points, outer_idx, n2, d);
+
+	// The coordiantes of the vantage point
+	T->vp = malloc(d * sizeof(double));
+	for(int k = 0; k < d; k++) {
+		T->vp[k] = X[ IDX(d,vp_idx,k) ];
+	}
 
 	return T;
 

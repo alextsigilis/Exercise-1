@@ -2,7 +2,7 @@
 #include <math.h>
 #include "vptree.h"
 
-#define IDX(i, k)  i*d + k
+#define IDX(d, i, k)  i*d + k
 
 double quickSelect (double *A, int n, int k) {
 	int start = 0;
@@ -87,26 +87,32 @@ vptree * vpt (double *X, int* idx, int n, int d) {
 	}
 
 
-	int pivot_idx = idx[n-1];
-	T->idx = pivot_idx;
+	int vp_idx = n-1;
+	T->idx = idx[n-1];
 
-	double dist[n-1],dist_m[n-1];
+	double dist[n-1];
 
 	for(int i=0; i<n-1;i++) { // Foreach point
 
 		dist[i] = 0;
 
 		for(int k=0; k<d;k++) {
-			dist[i] += pow( X[ IDX(i,k) ] - X[ IDX(pivot_idx,k )]	, 2 ); // Σ(x_i - p_i)^2
+			double z = 0;
+			z = X[ IDX(d,i,k) ] - X[ IDX(d,vp_idx,k )];
+			z = pow( z	, 2 );
+			dist[i] += z;
 		}
-		dist[i] = sqrt(dist[i]); √Σ(x_i - pi)^2
-		dist_m[i] = dist[i];
-
+		dist[i] = sqrt(dist[i]);  // √Σ(x_i - pi)^2
 	}
 
 
+	double *dist_m = malloc(n*sizeof(double));
+	for(int i = 0; i < n; i++) { dist_m[i] = dist[i]; }
+
 	double median = findMedian(dist_m, n-1);
 	T->md = median;
+
+	free(dist_m);
 
 	// Find the inner points and outer points
 	int n1 = ceil( (double)(n-1)/2 );
@@ -125,7 +131,7 @@ vptree * vpt (double *X, int* idx, int n, int d) {
 		if (dist[i] <= median) {
 			inner_idx[j1] = idx[i];
 			for(int k = 0; k < d; k++) {
-				inner_points[ IDX(j1,k) ] = X[ IDX(i,k) ];
+				inner_points[ IDX(d,j1,k) ] = X[ IDX(d,i,k) ];
 			}
 			j1++;
 		}
@@ -133,7 +139,7 @@ vptree * vpt (double *X, int* idx, int n, int d) {
 		else {
 			outer_idx[j2] = idx[i];
 			for(int k = 0; k < d; k++) {
-				outer_points[ IDX(j2,k) ] = X[ IDX(i,k) ];
+				outer_points[ IDX(d,j2,k) ] = X[ IDX(d,i,k) ];
 			}
 			j2++;
 		}

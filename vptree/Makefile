@@ -1,19 +1,3 @@
-# ####################################################################
-#
-#			   C/C++ Makefile
-#
-# Author: Dimitris Floros <fcdimitr@auth.gr>
-#
-# Adapted from
-#  http://www.cs.swarthmore.edu/~newhall/unixhelp/howto_makefiles.html
-#
-# ####################################################################
-#
-# 'make'        build executable file 'main'
-# 'make lib'	build the libraries .a
-# 'make clean'  removes all .o and executable files
-#
-
 # define the shell to bash
 SHELL := /bin/bash
 
@@ -60,14 +44,10 @@ lib: $(addsuffix .a, $(addprefix lib/$(SRC)_, $(TYPES)))
 $(MAIN)_%: $(MAIN).c lib/$(SRC)_%.a
 	$(CC) $(CFLAGS) -I$(INCLUDES) -o $@ $^ $(LDFLAGS) $(LIBS)
 
-# this is a suffix replacement rule for building .o's from .c's
-# it uses automatic variables $<: the name of the prerequisite of
-# the rule(a .cpp file) and $@: the name of the target of the rule (a .o file)
-
 $(addsuffix .a, $(addprefix lib/$(SRC)_, $(TYPES))): $(addsuffix .o, $(addprefix lib/$(SRC)_, $(TYPES)))
 	ar rcs $@ $<
 
-# (see the gnu make manual section about automatic variables)
+
 $(addsuffix .o, $(addprefix lib/$(SRC)_, $(TYPES))): $(addsuffix .c, $(addprefix src/$(SRC)_, $(TYPES)))
 	$(CC) $(CFLAGS) -I$(INCLUDES) -o $@ -c $<
 

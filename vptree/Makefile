@@ -1,6 +1,12 @@
+CC = gcc
+
+CFLAGS = -O0 -Wall -g -fsanitize=address
+
 INC = -Iinc/
 
 TYPES = sequential pthreads
+
+SHELL := /bin/bash
 
 SRC = vptree
 
@@ -19,8 +25,6 @@ lib/%.a: lib/%.o
 
 lib/%.o: src/%.c
 	gcc $(INC) -o $@ -c $<
-
-
 
 clean:
 	rm lib/* *~ $(addprefix $(MAIN)_, $(TYPES)) 

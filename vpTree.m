@@ -18,7 +18,7 @@ function T = vpTree(X)
 
 			T.idx = idx(n);
 			d = sqrt( sum((X(1:n-1,:) - X(n,:)).^2,2) );
-			medianDistance = median(d);
+			medianDistance = Median(d);
 			T.md = medianDistance;
 			% split and recurse
 			inner = d <= medianDistance;
@@ -26,4 +26,12 @@ function T = vpTree(X)
 			T.outer = vpt(X(~inner,:), idx(~inner));
 		end;
 	end;
+	
+	function m = Median(X)
+		if length(X) == 0
+			m = 0;
+		else
+			m = median(X);
+		end
+	end
 end;

@@ -3,46 +3,44 @@
 #include <time.h>
 #include "vptree.h"
 
-#define IDX(d, i, k)  i*d + k
+#define IDX(d,i,k)  d*i + k
 
-void fun (vptree* T) {
+void fun(vptree *T) {
 
-  if(T == NULL) {
-    return ;
-  }
+	if(T==NULL){
+		printf("NULL\n");
+		return;
+	}
+	printf("IDX: %d, Med.= %f\n", T->idx, T->md);
 
-  printf("idx: %d, md: %f\n", T->idx, T->md);
-
-  fun(T->inner);
-  fun(T->outer);
-
+	fun(T->inner);
+	fun(T->outer);
 }
 
-int main () {
+int main (int argc, char** argv) {
 
-  FILE *in = fopen("data.in", "r");
+	FILE* fin = fopen("data.in", "r");
+	
+	int n,d;
 
-  int n , d;
+	n = atoi(argv[1]);
+	d = atoi(argv[2]);
 
-  fscanf(in, "%d %d", &n, &d);
-
-  double X[n*d];
+	double *X = malloc(n*d*sizeof(double));
 
   for (int i = 0; i < n; i++) {
     for (int k = 0; k < d; k++) {
-      double y;
-      fscanf(in, "%lf", &y);
-      X[IDX(d,i,k)] = y;
-      printf("%f ", y);
+			double y = (double) (rand()%100);
+			X[IDX(d,i,k)] = y;
     }
-    printf("\n");
   }
-  printf("\n");
 
-  vptree* T = buildvp(X,n,d);
+	//printf("Start Proccessing\n");
+	//time_t t1 = time(NULL);
+	buildvp(X,n,d);
+	//time_t t2 = time(NULL);
+	//printf("It took %f seconds.\n", difftime(t2,t1));
 
-  fun(T);
-
-  return 0;
+	return 0;
 
 }

@@ -1,10 +1,42 @@
+//
+//
+// WITH POINTS
+//
+//
+
 #include <stdlib.h>
 #include <math.h>
+#include <assert.h>
+
+#include <stdio.h>
+
 #include "vptree.h"
 
 #define IDX(d, i, k)  i*d + k
 
-double quickSelect (double *A, int n, int k) {
+typedef struct {
+	int d;
+	double *coordiantes;
+	int idx;
+} point;
+
+double distance (point *a, point *b) {
+
+	int d = a->d;
+
+	double x = 0;
+
+	for(int k = 0; k < d; k++) {
+		x += pow( a->coordiantes[k] - b->coordiantes[k] , 2);
+	}
+
+	x = sqrt(x);
+
+	return x;
+
+}
+
+point *quickSelect (point **A, point *vp, int n, int k) {
 	int start = 0;
 	int end = n;
 
@@ -13,20 +45,20 @@ double quickSelect (double *A, int n, int k) {
 		//
 		// PARTITION
 		//
-		double pivot = A[end-1];
+		point *pivot = A[end-1];
 
 		int i = start-1;
 
 		for (int j = start; j < end-1; j++) {
-			if (A[j] <= pivot) {
+			if ( distance(A[j],vp) <= distance(pivot,vp) ) {
 				i++;
-				double tmp = A[j];
+				point *tmp = A[j];
 				A[j] = A[i];
 				A[i] = tmp;
 			}
 		}
 
-		double tmp = A[i+1];
+		point *tmp = A[i+1];
 		A[i+1] = A[end-1];
 		A[end-1] = tmp;
 		i++;
@@ -48,29 +80,28 @@ double quickSelect (double *A, int n, int k) {
 	return A[start];
 }
 
-double findMedian (double *A, int n) {
+double findMedian (point **A, point *vp, int n) {
 
-	int k1, k2;
-	double m1, m2;
-	if (n%2 == 0) { // If even
-		k1 = n/2;
-		k2 = n/2 - 1;
+	if (n%2 != 0){ // n is odd
+		point *p = quickSelect(A, vp, n, n/2);
+
+		return distance(p, vp);
 	}
-	else{ // If odd
-		k1 = n/2;
-		k2 = n/2;
+	else {
+		point *p1, *p2;
+
+		p1 = quickSelect(A,vp,n,n/2);
+		//p2 = quickSelect(A,vp,n,n/2-1);
+
+		double d1 = distance(p1, vp);
+		double d2 = distance(p1, vp);
+
+		return (d1+d2)/2;
 	}
-
-	m1 = quickSelect(A, n, k1);
-	m2 = quickSelect(A, n, k2);
-
-
-	return (m1+m2)/2;
-
 
 }
 
-vptree * vpt (double *X, int* idx, int n, int d) {
+vptree * vpt (point **A, int n) {
 
 	vptree *T = malloc(sizeof(vptree));
 
@@ -78,82 +109,28 @@ vptree * vpt (double *X, int* idx, int n, int d) {
 		return NULL;
 	}
 
-	else if(n==1) {
+	point *vp = A[n-1];
+
+	T->vp = A[n-1]->coordiantes;
+	T->idx = A[n-1]->idx;
+
+	if(n==1) {
 		T->md = 0;
-		T->idx = idx[n-1];
 		T->inner = NULL;
 		T->outer = NULL;
 		return T;
 	}
 
-
-	int vp_idx = n-1;
-	T->idx = idx[n-1];
-
-	double dist[n-1];
-
-	for(int i=0; i<n-1;i++) { // Foreach point
-
-		dist[i] = 0;
-
-		for(int k=0; k<d;k++) {
-			double z = 0;
-			z = X[ IDX(d,i,k) ] - X[ IDX(d,vp_idx,k )];
-			z = pow( z	, 2 );
-			dist[i] += z;
-		}
-		dist[i] = sqrt(dist[i]);  // √Σ(x_i - pi)^2
-	}
+	T->md = findMedian(A, vp, n-1);
 
 
-	double *dist_m = malloc(n*sizeof(double));
-	for(int i = 0; i < n-1; i++) { dist_m[i] = dist[i]; }
+	int n_inner, n_outer;
 
-	double median = findMedian(dist_m, n-1);
-	T->md = median;
+	n_inner = ceil((((double)(n)) - 1) / 2 );
+	n_outer = floor( (((double)(n)) - 1) / 2  );
 
-	free(dist_m);
-
-	// Find the inner points and outer points
-	int n1 = ceil( (double)(n-1)/2 );
-	int n2 = floor( (double)(n-1)/2 );
-
-	int *inner_idx = malloc(n1*sizeof(int));
-	int *outer_idx = malloc(n2*sizeof(int));
-
-	double *inner_points = malloc(n1*d*sizeof(double));
-	double *outer_points = malloc(n2*d*sizeof(double));
-
-	int j1 = 0, j2 = 0;
-
-	for(int i = 0; i < n-1; i++) {
-
-		if (dist[i] <= median) {
-			inner_idx[j1] = idx[i];
-			for(int k = 0; k < d; k++) {
-				inner_points[ IDX(d,j1,k) ] = X[ IDX(d,i,k) ];
-			}
-			j1++;
-		}
-
-		else {
-			outer_idx[j2] = idx[i];
-			for(int k = 0; k < d; k++) {
-				outer_points[ IDX(d,j2,k) ] = X[ IDX(d,i,k) ];
-			}
-			j2++;
-		}
-	}
-
-	// Recurse
-	T->inner = vpt(inner_points, inner_idx, n1, d);
-	T->outer = vpt(outer_points, outer_idx, n2, d);
-
-	// The coordiantes of the vantage point
-	T->vp = malloc(d * sizeof(double));
-	for(int k = 0; k < d; k++) {
-		T->vp[k] = X[ IDX(d,vp_idx,k) ];
-	}
+	T->inner = vpt(A, n_inner);
+	T->outer = vpt(A+n_inner, n_outer);
 
 	return T;
 
@@ -163,13 +140,23 @@ vptree * buildvp (double *X, int n, int d) {
 
 	vptree *T;
 
-	int *idx = malloc(n*sizeof(int));
+	point **A = malloc(n*sizeof(point*));
 
-	for(int i=0; i<n; i++) {
-		idx[i] = i;
+	for(int p=0; p < n; p++) {
+		A[p] = malloc(sizeof(point));
+		A[p]->idx = p;
+		A[p]->d = d;
+		A[p]->coordiantes = X + IDX(d,p,0);
+
 	}
 
-	T = vpt(X, idx, n, d);
+	T = vpt(A, n);
+
+	/*double m = findMedian(A,A[n-1],n-1);
+
+	for(int i = 0; i < n-1; i++) {printf("%f ", A[i].coordiantes[0]);}
+	printf("\n");
+	printf("Medina Point : %f\n", m);*/
 
 	return T;
 

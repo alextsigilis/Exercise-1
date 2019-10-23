@@ -152,12 +152,6 @@ vptree * buildvp (double *X, int n, int d) {
 
 	T = vpt(A, n);
 
-	/*double m = findMedian(A,A[n-1],n-1);
-
-	for(int i = 0; i < n-1; i++) {printf("%f ", A[i].coordiantes[0]);}
-	printf("\n");
-	printf("Medina Point : %f\n", m);*/
-
 	return T;
 
 }

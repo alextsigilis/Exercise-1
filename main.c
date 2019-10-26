@@ -43,6 +43,61 @@ void delete(Queue *q) {
 	free(q);
 }
 
+void time_execution (double *X, int n, int d);
+
+void print_tree (vptree *T, int tabs );
+
+int main (int argc, char** argv) {
+
+	FILE *fin = fopen("data.in", "r");
+	int n = atoi(argv[1]), d = atoi(argv[2]);
+	double *X = malloc(n*d*sizeof(double));
+	for (int i = 0; i < n; i++) {
+    for (int k = 0; k < d; k++) {
+			double y = (double)(i*k)/10;
+			fscanf(fin, "%lf", &y);
+			X[IDX(d,i,k)] = y;
+    }
+  }
+
+	vptree *T = buildvp(X,n,d);
+
+	print_tree(T,0);
+
+	return 0;
+
+}
+
+
+void time_execution (double *X, int n, int d) {
+
+	FILE *fout = fopen("data.out", "w'");
+	int N[60];
+	double T[60];
+	int k = 0, i = 1;
+	for(int i = 10; i < n; i *= 10) {
+		for(int j = 1; j < 11; j++){
+			N[k] = i*j;
+			k++;
+		}
+	}
+
+	time_t t1,t2;
+	for(int i = 0; i < 50; i++) {
+		printf("...%d\n", N[i]);
+		t1 = time(NULL);
+		buildvp(X,N[i],d);
+		t2 = time(NULL);
+		T[i] = t2-t1;
+	}
+
+	for(int i = 0; i < 50; i++) {
+		fprintf(fout, "%d %f\n", N[i], T[i]);
+	}
+
+}
+
+
 void print_tree (vptree *T, int tabs ) {
 	if (T == NULL)
 		return;
@@ -50,32 +105,4 @@ void print_tree (vptree *T, int tabs ) {
 	printf("Index: %d, Median: %f\n", T->idx, T->md);
 	print_tree(T->inner, tabs+1);
 	print_tree(T->outer, tabs+1);
-}
-
-int main (int argc, char** argv) {
-
-	//FILE* fin = fopen("data.in", "r");
-
-	int n = atoi(argv[1]), d = atoi(argv[2]);
-
-	double *X = malloc(n*d*sizeof(double));
-
-  for (int i = 0; i < n; i++) {
-    for (int k = 0; k < d; k++) {
-			double y = (double)(rand()%10)/10;
-			//fscanf(fin, "%lf", &y);
-			X[IDX(d,i,k)] = y;
-    }
-  }
-
-
-	time_t t1,t2;
-	printf("Starting execution...\n");
-	t1 = time(NULL);
-	buildvp(X,n,d);
-	t2 = time(NULL);
-	printf("It took: %f seconds\n", difftime(t2,t1));
-
-	return 0;
-
 }

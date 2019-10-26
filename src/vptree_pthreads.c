@@ -1,3 +1,4 @@
+
 #include <stdlib.h>
 #include <math.h>
 #include <assert.h>
@@ -6,29 +7,19 @@
 
 #define IDX(d, i, k)  i*d + k
 
-typedef struct {
-	int d;
-	double *coordiantes;
-	int idx;
-} point;
-
-double distance (point *a, point *b) {
-
-	int d = a->d;
-
-	double x = 0;
-
-	for(int k = 0; k < d; k++) {
-		x += pow( a->coordiantes[k] - b->coordiantes[k] , 2);
+void compute_distances (double *dist, double *X, double *vp, int* indexes, int n, int d) {
+	for(int p = 0; p < n; p++) {
+		dist[p] = 0;
+		int i = indexes[p];
+		for(int k = 0; k < d; k++) {
+			dist[p] += pow( X[ IDX(d,i,k) ] - vp[k] , 2 );
+		}
+		dist[p] = sqrt(dist[p]);
 	}
-
-	x = sqrt(x);
-
-	return x;
 
 }
 
-point *quickSelect (point **A, point *vp, int n, int k) {
+double quickSelect (double *dist, int *indexes, int n, int k) {
 	int start = 0;
 	int end = n;
 
@@ -37,29 +28,37 @@ point *quickSelect (point **A, point *vp, int n, int k) {
 		//
 		// PARTITION
 		//
-		point *pivot = A[end-1];
+		double pivot = dist[end-1];
 
 		int i = start-1;
 
 		for (int j = start; j < end-1; j++) {
-			if ( distance(A[j],vp) <= distance(pivot,vp) ) {
+			if ( dist[j] <= pivot ) {
 				i++;
-				point *tmp = A[j];
-				A[j] = A[i];
-				A[i] = tmp;
+				//--------------------
+				double tmp_d = dist[j];
+				dist[j] = dist[i];
+				dist[i] = tmp_d;
+				//----------------
+				int tmp_i = indexes[j];
+				indexes[j] = indexes[i];
+				indexes[i] = tmp_i;
 			}
 		}
 
-		point *tmp = A[i+1];
-		A[i+1] = A[end-1];
-		A[end-1] = tmp;
+		double tmp_d= dist[i+1];
+		dist[i+1] = dist[end-1];
+		dist[end-1] = tmp_d;
+		// -----------------
+		int tmp_i = indexes[i+1];
+		indexes[i+1] = indexes[end-1];
+		indexes[end-1] = tmp_i;
 		i++;
-
 		//
 		// SELECT
 		//
 		if (i == k) {
-			return A[i];
+			return dist[i];
 		}
 		else if (i < k){
 			start = i+1;
@@ -69,21 +68,10 @@ point *quickSelect (point **A, point *vp, int n, int k) {
 		}
 	}
 
-	return A[start];
+	return dist[start];
 }
 
-double findMedian (point **A, point *vp, int n) {
-
-	point *mp = quickSelect(A, vp, n, n/2);
-
-	double md = distance(mp, vp);
-
-	return md;
-
-}
-
-vptree *vpt_parallel (point **A, int n);
-vptree * vpt (point **A, int n) {
+vptree * vpt (double *X, int *indexes, int n, int d) {
 
 	vptree *T = malloc(sizeof(vptree));
 
@@ -91,10 +79,10 @@ vptree * vpt (point **A, int n) {
 		return NULL;
 	}
 
-	point *vp = A[n-1];
+	int vp_idx = indexes[n-1];
 
-	T->vp = A[n-1]->coordiantes;
-	T->idx = A[n-1]->idx;
+	T->vp = &(X[ IDX(d,vp_idx,0) ]);
+	T->idx = vp_idx;
 
 	if(n==1) {
 		T->md = 0;
@@ -103,54 +91,19 @@ vptree * vpt (point **A, int n) {
 		return T;
 	}
 
-	T->md = findMedian(A, vp, n-1);
-
+	double *dist = malloc((n-1)*sizeof(double));
+	compute_distances(dist,X,T->vp,indexes,n-1,d);
+	T->md = quickSelect(dist, indexes, n-1, (n-1)/2);
+	free(dist);
 
 	int n_inner, n_outer;
-
 	n_inner = ceil((((double)(n)) - 1) / 2 );
 	n_outer = floor( (((double)(n)) - 1) / 2  );
 
-	T->inner = vpt_parallel(A, n_inner);
-	T->outer = vpt_parallel(A+n_inner, n_outer);
+	T->inner = vpt(X, indexes, n_inner, d);
+	T->outer = vpt(X, indexes+n_inner, n_outer, d);
 
 	return T;
-
-}
-
-typedef struct {
-	point** A;
-	int n;
-
-	vptree *T;
-} t_arg;
-
-void *vpt_wrapper (void *arg) {
-
-	int n = ((t_arg*)arg)->n;
-	point **A = ((t_arg*)arg)->A;
-
-	vptree *T = vpt(A,n);
-
-	((t_arg*)arg)->T = T;
-
-	return NULL;
-
-}
-
-vptree *vpt_parallel (point **A, int n) {
-
-	pthread_t t;
-
-	t_arg *arg = malloc(sizeof(t_arg));
-	arg->A = A;
-	arg->n = n;
-
-	pthread_create(&t, NULL, vpt_wrapper, (void*)arg);
-
-	pthread_join(t, NULL);
-
-	return arg->T;
 
 }
 
@@ -158,17 +111,13 @@ vptree * buildvp (double *X, int n, int d) {
 
 	vptree *T;
 
-	point **A = malloc(n*sizeof(point*));
+	int *indexes = malloc(n*sizeof(int));
 
 	for(int p=0; p < n; p++) {
-	A[p] = malloc(sizeof(point));
-	A[p]->idx = p;
-	A[p]->d = d;
-	A[p]->coordiantes = X + IDX(d,p,0);
-
+		indexes[p] = p;
 	}
 
-	T = vpt_parallel(A, n);
+	T = vpt(X, indexes, n, d);
 
 	return T;
 
@@ -177,15 +126,19 @@ vptree * buildvp (double *X, int n, int d) {
 vptree * getInner (vptree * T) {
 	return T->inner;
 }
+
 vptree * getOuter (vptree * T) {
 	return T->outer;
 }
+
 double  getMD (vptree * T) {
 	return T->md;
 }
+
 double * getVP (vptree * T) {
 	return T->vp;
 }
+
 int getIDX (vptree * T) {
 	return T->idx;
 }

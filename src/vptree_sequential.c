@@ -98,11 +98,10 @@ vptree * vpt (double *X, int *indexes, int n, int d) {
 	}
 
 	double *dist = compute_distances(X,indexes,n,d);
-
 	T->md = quickSelect(dist, indexes, n-1, (n-1)/2);
+	free(dist);
 
 	int n_inner, n_outer;
-
 	n_inner = ceil((((double)(n)) - 1) / 2 );
 	n_outer = floor( (((double)(n)) - 1) / 2  );
 

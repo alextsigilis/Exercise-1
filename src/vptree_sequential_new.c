@@ -6,9 +6,9 @@
 
 #define IDX(d, i, k)  i*d + k
 
-double *compute_distances (double *X, int* indexes, int n, int d) {
+double *compute_distances (double *X, int* indexes, int n; int d) {
 
-	double *dist = malloc( (n-1) * sizeof(double) );
+	double dist = malloc( (n-1) * sizeof(double) );
 
 	int vp_idx = indexes[n-1];
 
@@ -25,7 +25,7 @@ double *compute_distances (double *X, int* indexes, int n, int d) {
 
 }
 
-double quickSelect (double *dist, int *indexes, int n, int k) {
+point *quickSelect (double *dist, int *indexes, int n, int k) {
 	int start = 0;
 	int end = n;
 
@@ -48,18 +48,19 @@ double quickSelect (double *dist, int *indexes, int n, int k) {
 				//----------------
 				int tmp_i = indexes[j];
 				indexes[j] = indexes[i];
-				indexes[i] = tmp_i;
+				indexes[i] = tmp_i
 			}
 		}
 
-		double tmp_d= dist[i+1];
+		double tmp _d= dist[i+1];
 		dist[i+1] = dist[end-1];
 		dist[end-1] = tmp_d;
 		// -----------------
-		int tmp_i = indexes[i+1];
-		indexes[i+1] = indexes[end-1];
-		indexes[end-1] = tmp_i;
+		int tmp_i = indexes[j];
+		indexes[j] = indexes[i];
+		indexes[i] = tmp_i
 		i++;
+
 		//
 		// SELECT
 		//
@@ -87,7 +88,7 @@ vptree * vpt (double *X, int *indexes, int n, int d) {
 
 	int vp_idx = indexes[n-1];
 
-	T->vp = &(X[ IDX(d,vp_idx,0) ]);
+	T->vp = X[ IDX(d,vp_idx,0) ];
 	T->idx = vp_idx;
 
 	if(n==1) {
@@ -99,7 +100,7 @@ vptree * vpt (double *X, int *indexes, int n, int d) {
 
 	double *dist = compute_distances(X,indexes,n,d);
 
-	T->md = quickSelect(dist, indexes, n-1, (n-1)/2);
+	T->md = quickSelect(dist, indexes, n, n/2);
 
 	int n_inner, n_outer;
 

@@ -2,5 +2,13 @@
 
 *.dSYM
 
+main_sequential
+main_pthreads
 
-vptree/lib/*
+*.pdf
+
+data.in
+
+*.png
+
+*.m

@@ -4,7 +4,7 @@ CFLAGS = -O0 -Wall -g -fsanitize=address
 
 INC = -Iinc/
 
-TYPES = sequential pthreads
+TYPES = pthreads sequential
 
 SHELL := /bin/bash
 
@@ -27,4 +27,4 @@ lib/%.o: src/%.c
 	$(CC) $(CFLAGS) $(INC) -o $@ -c $<
 
 clean:
-	rm lib/* *~ $(addprefix $(MAIN)_, $(TYPES)) 
+	rm lib/* *~ $(addprefix $(MAIN)_, $(TYPES))

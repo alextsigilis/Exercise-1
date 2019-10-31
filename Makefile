@@ -1,16 +1,16 @@
 CC = gcc
 
-CFLAGS = -O0 -Wall -g -fsanitize=address
+CFLAGS = -O3 -Wall -g -fsanitize=address
 
 INC = -Iinc/
 
-TYPES = sequential
+TYPES = sequential pthreads
 
 SHELL := /bin/bash
 
 SRC = vptree
 
-MAIN = tester
+MAIN = main
 
 all: $(addprefix $(MAIN)_, $(TYPES))
 

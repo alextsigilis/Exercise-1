@@ -12,3 +12,7 @@ data.in
 *.png
 
 *.m
+
+*.yml
+
+figures/*

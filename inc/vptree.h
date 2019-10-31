@@ -1,5 +1,6 @@
 #ifndef __VPTREE_H_
 #define __VPTREE_H_
+
 // type definition of vptree
 
 typedef struct tmp_struct {
@@ -10,6 +11,16 @@ typedef struct tmp_struct {
   struct tmp_struct* outer; // The outer sub-tree
 } vptree;
 
+
+//! Returns the Vantage Point Tree
+/*!
+\param X 				The set of points
+\param indexes	The indexes of the points
+\param n				The number of the points
+\param d				The dimentions of the points
+\return 				The VPT tree
+*/
+vptree *vpt (double *X, int *indexes, int n, int d);
 
 // ========== LIST OF ACCESSORS
 //! Build vantage-point tree given input dataset X

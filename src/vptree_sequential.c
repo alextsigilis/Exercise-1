@@ -6,26 +6,50 @@
 
 #define IDX(d, i, k)  i*d + k
 
-double *compute_distances (double *X, int* indexes, int n, int d) {
-
-	double *dist = malloc( (n-1) * sizeof(double) );
-
-	int vp_idx = indexes[n-1];
-
-	for(int p = 0; p < n-1; p++) {
-		dist[p] = 0;
-		int i = indexes[p];
-		for(int k = 0; k < d; k++) {
-			dist[p] += pow( X[ IDX(d,i,k) ] - X[ IDX(d,vp_idx,k) ] , 2 );
-		}
-		dist[p] = sqrt(dist[p]);
+//! Return the distance between 2 points
+/*!
+\param x1 		The first point
+\param x2 		The second point
+\param d 			The dimentions of the points
+\return 	The distance from point x1 to x2 (double)
+*/
+double distance (double *x1, double *x2, int d) {
+	double dist = 0;
+	for(int k = 0; k < d; k++) {
+		dist += pow( x1[k]-x2[k], 2 );
 	}
-
+	dist = sqrt(dist);
 	return dist;
-
 }
 
-double quickSelect (double *dist, int *indexes, int n, int k) {
+
+
+//! Return an array with the distances of every point in X,
+//! to the last point in X
+/*!
+\param X 		The set of points
+\param n		The number of points
+\param d		The dimentions of the points
+\return 	The distances (pointer to array of double)
+*/
+double *computeDistances (double *X, int n, int d) {
+	double *dist = malloc( (n-1) * sizeof(double) );
+	double *vp = X + (n-1)*d;
+	for(int i = 0; i < n-1; i++) {
+		dist[i] = distance(&(X[IDX(d,i,0)]), vp, d);
+	}
+	return dist;
+}
+
+
+//! Returns the element of which k elements are less than or equal
+/*!
+\param dist 		The array of elements
+\param n				The number of the elements
+\param k				The dimentions of the points
+\return 				The k-th element
+*/
+double quickSelect (double *dist, int n, int k) {
 	int start = 0;
 	int end = n;
 
@@ -41,24 +65,15 @@ double quickSelect (double *dist, int *indexes, int n, int k) {
 		for (int j = start; j < end-1; j++) {
 			if ( dist[j] <= pivot ) {
 				i++;
-				//--------------------
 				double tmp_d = dist[j];
 				dist[j] = dist[i];
 				dist[i] = tmp_d;
-				//----------------
-				int tmp_i = indexes[j];
-				indexes[j] = indexes[i];
-				indexes[i] = tmp_i;
 			}
 		}
 
 		double tmp_d= dist[i+1];
 		dist[i+1] = dist[end-1];
 		dist[end-1] = tmp_d;
-		// -----------------
-		int tmp_i = indexes[i+1];
-		indexes[i+1] = indexes[end-1];
-		indexes[end-1] = tmp_i;
 		i++;
 		//
 		// SELECT
@@ -77,9 +92,19 @@ double quickSelect (double *dist, int *indexes, int n, int k) {
 	return dist[start];
 }
 
-vptree * vpt (double *X, int *indexes, int n, int d) {
+
+//! Returns the Vantage Point Tree
+/*!
+\param X 				The set of points
+\param indexes	The indexes of the points
+\param n				The number of the points
+\param d				The dimentions of the points
+\return 				The VPT tree
+*/
+vptree *vpt (double *X, int *indexes, int n, int d) {
 
 	vptree *T = malloc(sizeof(vptree));
+
 
 	if(n == 0) {
 		return NULL;
@@ -87,7 +112,9 @@ vptree * vpt (double *X, int *indexes, int n, int d) {
 
 	int vp_idx = indexes[n-1];
 
-	T->vp = &(X[ IDX(d,vp_idx,0) ]);
+	T->vp = malloc(d*sizeof(double));
+	for(int k=0; k<d; k++) { T->vp[k] = X[ d*(n-1)+k];}
+
 	T->idx = vp_idx;
 
 	if(n==1) {
@@ -97,53 +124,113 @@ vptree * vpt (double *X, int *indexes, int n, int d) {
 		return T;
 	}
 
-	double *dist = compute_distances(X,indexes,n,d);
-	T->md = quickSelect(dist, indexes, n-1, (n-1)/2);
+	double *dist = computeDistances(X,n,d);
+	double median = quickSelect(dist,n-1,(n-1)/2);
+	T->md = median;
 	free(dist);
 
-	int n_inner, n_outer;
-	n_inner = ceil((((double)(n)) - 1) / 2 );
-	n_outer = floor( (((double)(n)) - 1) / 2  );
+	// partition to inner and outer elements
+	int i = -1;
+	for(int j = 0; j < n-1; j++) {
+		if(distance(X+d*j, T->vp, d) <= T->md) {
+			i++;
+			for(int k = 0; k < d; k++) {
+				double tmp_x = X[ IDX(d,j,k) ];
+				X[ IDX(d,j,k) ] = X[ IDX(d,i,k) ];
+				X[ IDX(d,i,k) ] = tmp_x;
+			}
+			// -------------- //
+			int tmp_i = indexes[j];
+			indexes[j] = indexes[i];
+			indexes[i] = tmp_i;
+		}
+	}
 
-	T->inner = vpt(X, indexes, n_inner, d);
-	T->outer = vpt(X, indexes+n_inner, n_outer, d);
+	for(int alex = i+1; alex < n-1; alex++) {
+		assert(distance(X+d*alex, T->vp, d) > median);
+	}
+
+	T->inner = vpt(X, indexes, i+1, d);
+	T->outer = vpt(X+d*(i+1), indexes+(i+1), (n-1)-(i+1), d);
 
 	return T;
 
 }
 
+
+//! Build vantage-point tree given input dataset X
+/*!
+\param X Input data points, stored as [n-by-d] array
+\param n Number of data points (rows of X)
+\param d Number of dimensions (columns of X)
+\return The vantage-point tree
+*/
 vptree * buildvp (double *X, int n, int d) {
 
 	vptree *T;
 
+	double *Y = malloc(n*d*sizeof(double));
 	int *indexes = malloc(n*sizeof(int));
 
 	for(int p=0; p < n; p++) {
 		indexes[p] = p;
+		for(int k=0; k < d; k++){
+			Y[ IDX(d,p,k) ] = X[ IDX(d,p,k) ];
+ 		}
 	}
 
-	T = vpt(X, indexes, n, d);
+	T = vpt(Y, indexes, n, d);
 
 	return T;
 
 }
 
+
+//! Return vantage-point subtree with points inside radius
+/*!
+\param node A vantage-point tree
+\return The vantage-point subtree
+*/
 vptree * getInner (vptree * T) {
 	return T->inner;
 }
 
+
+//! Return vantage-point subtree with points outside radius
+/*!
+\param node A vantage-point tree
+\return The vantage-point subtree
+*/
 vptree * getOuter (vptree * T) {
 	return T->outer;
 }
 
+
+//! Return median of distances to vantage point
+/*!
+\param node A vantage-point tree
+\return The median distance
+*/
 double  getMD (vptree * T) {
 	return T->md;
 }
 
+
+//! Return the coordinates of the vantage point
+/*!
+\param node A vantage-point tree
+\return The coordinates [d-dimensional vector]
+*/
 double * getVP (vptree * T) {
 	return T->vp;
 }
 
+
+//! Return the index of the vantage point
+/*!
+\param node A vantage-point tree
+\return The index to the input vector of data points
+*/
 int getIDX (vptree * T) {
 	return T->idx;
 }

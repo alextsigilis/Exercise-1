@@ -4,13 +4,13 @@ CFLAGS = -O0 -Wall -g -fsanitize=address
 
 INC = -Iinc/
 
-TYPES = pthreads sequential
+TYPES = sequential
 
 SHELL := /bin/bash
 
 SRC = vptree
 
-MAIN = main
+MAIN = tester
 
 all: $(addprefix $(MAIN)_, $(TYPES))
 
@@ -27,4 +27,4 @@ lib/%.o: src/%.c
 	$(CC) $(CFLAGS) $(INC) -o $@ -c $<
 
 clean:
-	rm lib/* *~ $(addprefix $(MAIN)_, $(TYPES))
+	rm -rf *.dSYM lib/* *~ $(addprefix $(MAIN)_, $(TYPES))

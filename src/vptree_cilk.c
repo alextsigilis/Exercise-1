@@ -2,6 +2,7 @@
 #include <math.h>
 #include <assert.h>
 #include <cilk/cilk.h>
+#include <cilk/cilk_api.h>
 #include "vptree.h"
 
 #define IDX(d, i, k)  i*d + k
@@ -35,7 +36,7 @@ double distance (double *x1, double *x2, int d) {
 double *computeDistances (double *X, int n, int d) {
 	double *dist = malloc( (n-1) * sizeof(double) );
 	double *vp = X + (n-1)*d;
-	cilk_for(int i = 0; i < n-1; i++) {
+	for(int i = 0; i < n-1; i++) {
 		dist[i] = distance(&(X[IDX(d,i,0)]), vp, d);
 	}
 	return dist;
@@ -151,7 +152,7 @@ vptree *vpt (double *X, int *indexes, int n, int d) {
 	}
 
 	T->inner = cilk_spawn vpt(X, indexes, i+1, d);
-	T->outer = cilk_spawn vpt(X+d*(i+1), indexes+(i+1), (n-1)-(i+1), d);
+	T->outer = vpt(X+d*(i+1), indexes+(i+1), (n-1)-(i+1), d);
 
 	cilk_sync;
 

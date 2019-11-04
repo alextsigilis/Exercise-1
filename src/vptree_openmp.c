@@ -4,8 +4,6 @@
 #include <omp.h>
 #include "vptree.h"
 
-#include <stdio.h>
-
 #define   DIST_THRD_THRES     10000*10
 #define   VPT_THRD_THRESS     1000*10
 #define   IDX(d, i, k)        i*d + k

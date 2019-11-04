@@ -1,10 +1,9 @@
-CC = gcc
+CC = gcc-7
 
-CFLAGS = -O3 -Wall -g -fsanitize=address
+CFLAGS = -O3 -Wall -g  -fopenmp -fcilkplus
 
 INC = -Iinc/
-
-TYPES = sequential pthreads
+TYPES = sequential pthreads openmp cilk
 
 SHELL := /bin/bash
 
@@ -15,7 +14,8 @@ MAIN = main
 all: $(addprefix $(MAIN)_, $(TYPES))
 
 $(MAIN)_%: $(MAIN).c lib/$(SRC)_%.a
-	$(CC) $(CFLAGS) $(INC) -o $@ $^
+	$(CC) $(CFLAGS) $(INC) -o $@ $^ libcilkrts.a
+	rm -rf *.dSYM
 
 lib: $(addsuffix .a, $(addprefix lib/$(SRC)_, $(TYPES)))
 

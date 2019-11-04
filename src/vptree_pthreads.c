@@ -4,8 +4,6 @@
 #include <pthread.h>
 #include "vptree.h"
 
-#include <stdio.h>
-
 #define   MAX_DIST_THRDS      10
 #define   DIST_THRD_THRES     10000*10
 #define   VPT_THRD_THRESS     1000*10

@@ -6,7 +6,6 @@
 
 #include <stdio.h>
 
-#define   MAX_DIST_THRDS      10
 #define   DIST_THRD_THRES     10000*10
 #define   VPT_THRD_THRESS     1000*10
 #define   IDX(d, i, k)        i*d + k
@@ -42,13 +41,15 @@ double *computeDistances (double *X, int n, int d) {
 	double *dist = malloc( (n-1) * sizeof(double) );
 	double *vp = X + (n-1)*d;
 
-	for(int i = 0; i < n-1; i++) {
-		dist[i] = 0;
-		for(int k = 0; k < d; k++) {
-			dist[i] += pow((X[IDX(d,i,k)]- vp[k]), 2);
+	#pragma omp parallel for schedule(static) if(n*d>DIST_THRD_THRES)
+		for(int i = 0; i < n-1; i++) {
+			dist[i] = 0;
+			for(int k = 0; k < d; k++) {
+				dist[i] += pow((X[IDX(d,i,k)]- vp[k]), 2);
+			}
+			dist[i] = sqrt(dist[i]);
 		}
-		dist[i] = sqrt(dist[i]);
-	}
+
 	return dist;
 }
 
@@ -188,6 +189,7 @@ vptree * buildvp (double *X, int n, int d) {
  		}
 	}
 
+	omp_set_num_threads(64);
 	omp_set_nested(1);
 	#pragma omp parallel
 	{

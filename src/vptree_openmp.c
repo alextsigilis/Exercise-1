@@ -8,7 +8,7 @@
 
 #define   MAX_DIST_THRDS      10
 #define   DIST_THRD_THRES     10000*10
-#define   VPT_THRD_THRESS     10000*10
+#define   VPT_THRD_THRESS     1000*10
 #define   IDX(d, i, k)        i*d + k
 
 //! Return the distance between 2 points
@@ -42,18 +42,12 @@ double *computeDistances (double *X, int n, int d) {
 	double *dist = malloc( (n-1) * sizeof(double) );
 	double *vp = X + (n-1)*d;
 
-	omp_set_num_threads(8);
- 	#pragma omp parallel if(n*d >= 1000000) shared(X,dist,vp, n, d)
-	{
-		#pragma omp for schedule(static)
-		for(int i = 0; i < n-1; i++) {
-			dist[i] = 0;
-			for(int k = 0; k < d; k++) {
-				dist[i] += pow((X[IDX(d,i,k)]- vp[k]), 2);
-			}
-			dist[i] = sqrt(dist[i]);
+	for(int i = 0; i < n-1; i++) {
+		dist[i] = 0;
+		for(int k = 0; k < d; k++) {
+			dist[i] += pow((X[IDX(d,i,k)]- vp[k]), 2);
 		}
-
+		dist[i] = sqrt(dist[i]);
 	}
 	return dist;
 }
@@ -162,19 +156,11 @@ vptree *vpt (double *X, int *indexes, int n, int d) {
 		}
 	}
 
-	omp_set_nested(1);
-	#pragma omp parallel shared(X,indexes,i,n,d) if(n*d > VPT_THRD_THRESS && omp_get_num_threads() < 20)
-	{
-		#pragma omp sections
-		{
-			#pragma omp section
-			T->inner = vpt(X, indexes, i+1, d);
-		}
+	#pragma omp task if(n*d > VPT_THRD_THRESS)
+	T->inner = vpt(X, indexes, i+1, d);
 
-		#pragma omp master
-		T->outer = vpt(X+d*(i+1), indexes+(i+1), (n-1)-(i+1), d);
-	}
-
+	#pragma omp master
+	T->outer = vpt(X+d*(i+1), indexes+(i+1), (n-1)-(i+1), d);
 
 	return T;
 
@@ -202,7 +188,11 @@ vptree * buildvp (double *X, int n, int d) {
  		}
 	}
 
-	T = vpt(Y, indexes, n, d);
+	omp_set_nested(1);
+	#pragma omp parallel
+	{
+		T = vpt(Y, indexes, n, d);
+	}
 
 	return T;
 

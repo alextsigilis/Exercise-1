@@ -9,21 +9,24 @@ void print_tree (vptree *T, int tabs );
 
 int main (int argc, char** argv) {
 
-	srand(time(NULL));
+	//srand(time(NULL));
 
 	int n = atoi(argv[1]), d = atoi(argv[2]);
 	double *X = malloc(n*d*sizeof(double));
 	for (int i = 0; i < n; i++) {
     for (int k = 0; k < d; k++) {
 			double y = (double)(rand()%100);
-			printf("%f ", y);
+			//printf("%f ", y);
 			X[IDX(d,i,k)] = y;
-    }printf(";\n");
+    }//printf(";\n");
   }
 
-	vptree *T = buildvp(X,n,d);
-
-	print_tree(T,0);
+	//printf("Starting...\n");
+	//time_t t1,t2;
+	//t1 = time(NULL);
+	buildvp(X,n,d);
+	//t2 = time(NULL);
+	//printf("It took %f seconds\n", difftime(t2,t1));
 
 	return 0;
 

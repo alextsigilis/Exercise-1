@@ -1,4 +1,4 @@
-CC = gcc-7
+CC = gcc-9
 
 CFLAGS = -O3 -Wall -g  -fopenmp -fcilkplus
 

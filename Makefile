@@ -14,7 +14,7 @@ MAIN = main
 all: $(addprefix $(MAIN)_, $(TYPES))
 
 $(MAIN)_%: $(MAIN).c lib/$(SRC)_%.a
-	$(CC) $(CFLAGS) $(INC) -o $@ $^ libcilkrts.a
+	$(CC) $(CFLAGS) $(INC) -o $@ $^
 	rm -rf *.dSYM
 
 lib: $(addsuffix .a, $(addprefix lib/$(SRC)_, $(TYPES)))
